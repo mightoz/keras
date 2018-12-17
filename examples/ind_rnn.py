@@ -409,7 +409,10 @@ class IndRNN(RNN):
         self.activity_regularizer = regularizers.get(activity_regularizer)
 
     def build(self, input_shape):
-        timesteps = input_shape[1]
+        if isinstance(input_shape, list):
+            timesteps = input_shape[0][1]
+        else:
+            timesteps = input_shape[1]
 
         if timesteps is None:
             warnings.warn("Number of timesteps was not provided. If this model is being used for training purposes, \n"

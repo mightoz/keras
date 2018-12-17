@@ -59,7 +59,7 @@ from ind_rnn import IndRNN
 current_dir = dirname(__file__)
 
 batch_size = 64  # Batch size for training.
-epochs = 2  # Number of epochs to train for.
+epochs = 1  # Number of epochs to train for.
 latent_dim = 256  # Latent dimensionality of the encoding space.
 num_samples = 10000  # Number of samples to train on.
 # Path to the data txt file on disk.
@@ -167,16 +167,17 @@ model.save('s2s.h5')
 # Define sampling models
 encoder_model = Model(encoder_inputs, encoder_states)
 
-decoder_state_input_h = Input(shape=(latent_dim,))
-decoder_state_input_c = Input(shape=(latent_dim,))
-decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
-decoder_outputs, state_h, state_c = decoder_lstm(
-    decoder_inputs, initial_state=decoder_states_inputs)
-decoder_states = [state_h, state_c]
+#decoder_state_input_h = Input(shape=(latent_dim,))
+#decoder_state_input_c = Input(shape=(latent_dim,))
+decoder_state_input = Input(shape=(latent_dim,))
+#decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
+decoder_outputs, decoder_state = decoder_lstm(
+    decoder_inputs, initial_state=decoder_state_input)
+#decoder_states = [state_h, state_c]
 decoder_outputs = decoder_dense(decoder_outputs)
 decoder_model = Model(
-    [decoder_inputs] + decoder_states_inputs,
-    [decoder_outputs] + decoder_states)
+    [decoder_inputs] + decoder_state_input,
+    [decoder_outputs] + decoder_state)
 
 # Reverse-lookup token index to decode sequences back to
 # something readable.
