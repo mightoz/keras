@@ -54,10 +54,12 @@ from keras.models import Model
 from keras.layers import Input, LSTM, Dense
 import numpy as np
 from os.path import dirname, join
+from ind_rnn import IndRNN
+
 current_dir = dirname(__file__)
 
 batch_size = 64  # Batch size for training.
-epochs = 100  # Number of epochs to train for.
+epochs = 2  # Number of epochs to train for.
 latent_dim = 256  # Latent dimensionality of the encoding space.
 num_samples = 10000  # Number of samples to train on.
 # Path to the data txt file on disk.
@@ -125,19 +127,18 @@ for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
             decoder_target_data[i, t - 1, target_token_index[char]] = 1.
 
 # Define an input sequence and process it.
-encoder_inputs = Input(shape=(None, num_encoder_tokens))
-encoder = LSTM(latent_dim, return_state=True)
-encoder_outputs, state_h, state_c = encoder(encoder_inputs)
+encoder_inputs = Input(shape=(max_encoder_seq_length, num_encoder_tokens))
+encoder = IndRNN(latent_dim, return_state=True)
+encoder_outputs, encoder_states = encoder(encoder_inputs)
 # We discard `encoder_outputs` and only keep the states.
-encoder_states = [state_h, state_c]
 
 # Set up the decoder, using `encoder_states` as initial state.
-decoder_inputs = Input(shape=(None, num_decoder_tokens))
+decoder_inputs = Input(shape=(max_decoder_seq_length, num_decoder_tokens))
 # We set up our decoder to return full output sequences,
 # and to return internal states as well. We don't use the
 # return states in the training model, but we will use them in inference.
-decoder_lstm = LSTM(latent_dim, return_sequences=True, return_state=True)
-decoder_outputs, _, _ = decoder_lstm(decoder_inputs,
+decoder_lstm = IndRNN(latent_dim, return_sequences=True, return_state=True)
+decoder_outputs, _ = decoder_lstm(decoder_inputs,
                                      initial_state=encoder_states)
 decoder_dense = Dense(num_decoder_tokens, activation='softmax')
 decoder_outputs = decoder_dense(decoder_outputs)
