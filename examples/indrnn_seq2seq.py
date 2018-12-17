@@ -59,7 +59,7 @@ from ind_rnn import IndRNN
 current_dir = dirname(__file__)
 
 batch_size = 64  # Batch size for training.
-epochs = 1  # Number of epochs to train for.
+epochs = 10  # Number of epochs to train for.
 latent_dim = 256  # Latent dimensionality of the encoding space.
 num_samples = 10000  # Number of samples to train on.
 # Path to the data txt file on disk.
@@ -133,7 +133,7 @@ encoder_outputs, encoder_states = encoder(encoder_inputs)
 # We discard `encoder_outputs` and only keep the states.
 
 # Set up the decoder, using `encoder_states` as initial state.
-decoder_inputs = Input(shape=(max_decoder_seq_length, num_decoder_tokens))
+decoder_inputs = Input(shape=(None, num_decoder_tokens))#max_decoder_seq_length, num_decoder_tokens))
 # We set up our decoder to return full output sequences,
 # and to return internal states as well. We don't use the
 # return states in the training model, but we will use them in inference.
@@ -170,11 +170,10 @@ encoder_model = Model(encoder_inputs, encoder_states)
 decoder_state_input = Input(shape=(latent_dim,))
 decoder_outputs, decoder_state = decoder_indrnn(
     decoder_inputs, initial_state=decoder_state_input)
-
 decoder_outputs = decoder_dense(decoder_outputs)
 decoder_model = Model(
-    [decoder_inputs] + decoder_state_input,
-    [decoder_outputs] + decoder_state)
+    [decoder_inputs] + [decoder_state_input],
+    [decoder_outputs] + [decoder_state])
 
 # Reverse-lookup token index to decode sequences back to
 # something readable.
@@ -198,8 +197,8 @@ def decode_sequence(input_seq):
     stop_condition = False
     decoded_sentence = ''
     while not stop_condition:
-        output_tokens, h, c = decoder_model.predict(
-            [target_seq] + states_value)
+        output_tokens, state = decoder_model.predict(
+            [target_seq] + [states_value])
 
         # Sample a token
         sampled_token_index = np.argmax(output_tokens[0, -1, :])
@@ -217,7 +216,7 @@ def decode_sequence(input_seq):
         target_seq[0, 0, sampled_token_index] = 1.
 
         # Update states
-        states_value = [h, c]
+        states_value = state#[h, c]
 
     return decoded_sentence
 
