@@ -137,8 +137,8 @@ decoder_inputs = Input(shape=(max_decoder_seq_length, num_decoder_tokens))
 # We set up our decoder to return full output sequences,
 # and to return internal states as well. We don't use the
 # return states in the training model, but we will use them in inference.
-decoder_lstm = IndRNN(latent_dim, return_sequences=True, return_state=True)
-decoder_outputs, _ = decoder_lstm(decoder_inputs,
+decoder_indrnn = IndRNN(latent_dim, return_sequences=True, return_state=True)
+decoder_outputs, _ = decoder_indrnn(decoder_inputs,
                                      initial_state=encoder_states)
 decoder_dense = Dense(num_decoder_tokens, activation='softmax')
 decoder_outputs = decoder_dense(decoder_outputs)
@@ -167,13 +167,10 @@ model.save('s2s.h5')
 # Define sampling models
 encoder_model = Model(encoder_inputs, encoder_states)
 
-#decoder_state_input_h = Input(shape=(latent_dim,))
-#decoder_state_input_c = Input(shape=(latent_dim,))
 decoder_state_input = Input(shape=(latent_dim,))
-#decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
-decoder_outputs, decoder_state = decoder_lstm(
+decoder_outputs, decoder_state = decoder_indrnn(
     decoder_inputs, initial_state=decoder_state_input)
-#decoder_states = [state_h, state_c]
+
 decoder_outputs = decoder_dense(decoder_outputs)
 decoder_model = Model(
     [decoder_inputs] + decoder_state_input,
