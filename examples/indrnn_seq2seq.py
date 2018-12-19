@@ -59,7 +59,7 @@ from ind_rnn import IndRNN
 current_dir = dirname(__file__)
 
 batch_size = 64  # Batch size for training.
-epochs = 10  # Number of epochs to train for.
+epochs = 100  # Number of epochs to train for.
 latent_dim = 256  # Latent dimensionality of the encoding space.
 num_samples = 10000  # Number of samples to train on.
 # Path to the data txt file on disk.
@@ -128,8 +128,10 @@ for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
 
 # Define an input sequence and process it.
 encoder_inputs = Input(shape=(max_encoder_seq_length, num_encoder_tokens))
-encoder = IndRNN(latent_dim, return_state=True)
-encoder_outputs, encoder_states = encoder(encoder_inputs)
+encoder1 = IndRNN(latent_dim, return_state=True, return_sequences=True)
+encoder1_outputs, encoder1_states = encoder1(encoder_inputs)
+encoder2 = IndRNN(latent_dim, return_state=True)
+encoder_outputs, encoder_states = encoder2(encoder1_outputs)
 # We discard `encoder_outputs` and only keep the states.
 
 # Set up the decoder, using `encoder_states` as initial state.
